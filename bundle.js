@@ -623,62 +623,134 @@ var irrelevant = (function (exports) {
 // Write your JavaScript code here!
 
 window.addEventListener("load", function() {
+    let form = document.querySelector("form");
+    
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        
+        let pilotNameInput = document.querySelector("input[name=pilotName]");
+        let copilotNameInput = document.querySelector("input[name=copilotName]");
+        let fuelLevelInput = document.querySelector("input[name=fuelLevel]");
+        let cargoMassInput = document.querySelector("input[name=cargoMass]");
+
+        let pilotName = pilotNameInput.value;
+        let copilotName = copilotNameInput.value;
+        let fuelLevel = fuelLevelInput.value;
+        let cargoMass = cargoMassInput.value;
+
+        let list = document.getElementById("faultyItems");
+
+        if (validateInput(pilotName) === "Empty" || validateInput(copilotName) === "Empty" || 
+            validateInput(fuelLevel) === "Empty" || validateInput(cargoMass) === "Empty") {
+            alert("All fields are required!");
+            return;
+        }
+
+        if (validateInput(fuelLevel) === "Not a Number" || validateInput(cargoMass) === "Not a Number") {
+            alert("Fuel level and Cargo mass should be numbers!");
+            return;
+        }
+
+        if (validateInput(pilotName) === "Is a Number" || validateInput(copilotName) === "Is a Number") {
+            alert("Pilot and Co-pilot names should be strings!");
+            return;
+        }
+
+        formSubmission(document, list, pilotName, copilotName, fuelLevel, cargoMass);
+    });
 
     let listedPlanets;
     // Set listedPlanetsResponse equal to the value returned by calling myFetch()
-    let listedPlanetsResponse;
+    let listedPlanetsResponse = myFetch();
     listedPlanetsResponse.then(function (result) {
         listedPlanets = result;
-        console.log(listedPlanets);
+        // console.log(listedPlanets);
     }).then(function () {
-        console.log(listedPlanets);
         // Below this comment call the appropriate helper functions to pick a planet fom the list of planets and add that information to your destination.
-    })
-    
- });
+        let planet = pickPlanet(listedPlanets);
+        addDestinationInfo(document, planet.name, planet.diameter, planet.star, planet.distance, planet.moons, planet.image);
+    });
+});
+
 },{}],3:[function(require,module,exports){
 // Write your helper functions here!
-
 require('cross-fetch/polyfill');
 
 function addDestinationInfo(document, name, diameter, star, distance, moons, imageUrl) {
-    // Here is the HTML formatting for our mission target div.
-    /*
-                 <h2>Mission Destination</h2>
-                 <ol>
-                     <li>Name: </li>
-                     <li>Diameter: </li>
-                     <li>Star: ${star}</li>
-                     <li>Distance from Earth: </li>
-                     <li>Number of Moons: </li>
-                 </ol>
-                 <img src="">
-    */
- }
- 
- function validateInput(testInput) {
-    
- }
- 
- function formSubmission(document, list, pilot, copilot, fuelLevel, cargoLevel) {
-    
- }
- 
- async function myFetch() {
-     let planetsReturned;
- 
-     planetsReturned = await fetch().then( function(response) {
-         });
- 
-     return planetsReturned;
- }
- 
- function pickPlanet(planets) {
- }
- 
- module.exports.addDestinationInfo = addDestinationInfo;
- module.exports.validateInput = validateInput;
- module.exports.formSubmission = formSubmission;
- module.exports.pickPlanet = pickPlanet; 
- module.exports.myFetch = myFetch;
+    let missionTarget = document.getElementById("missionTarget");
+    missionTarget.innerHTML = `
+        <h2>Mission Destination</h2>
+        <ol>
+            <li>Name: ${name}</li>
+            <li>Diameter: ${diameter}</li>
+            <li>Star: ${star}</li>
+            <li>Distance from Earth: ${distance}</li>
+            <li>Number of Moons: ${moons}</li>
+        </ol>
+        <img src="${imageUrl}">
+    `;
+}
+
+function validateInput(testInput) {
+    if (testInput.trim() === "") {
+        return "Empty";
+    } else if (isNaN(testInput)) {
+        return "Not a Number";
+    } else {
+        return "Is a Number";
+    }
+}
+
+function formSubmission(document, list, pilot, copilot, fuelLevel, cargoLevel) {
+    list.style.visibility = "visible";
+    document.getElementById("pilotStatus").textContent = `Pilot ${pilot} is ready for launch`;
+    document.getElementById("copilotStatus").textContent = `Co-pilot ${copilot} is ready for launch`;
+
+    let launchStatus = document.getElementById("launchStatus");
+    let fuelStatus = document.getElementById("fuelStatus");
+    let cargoStatus = document.getElementById("cargoStatus");
+
+    if (fuelLevel < 10000) {
+        fuelStatus.textContent = "Fuel level too low for launch";
+        launchStatus.textContent = "Shuttle not ready for launch";
+        launchStatus.style.color = "red";
+    } else {
+        fuelStatus.textContent = "Fuel level high enough for launch";
+    }
+
+    if (cargoLevel > 10000) {
+        cargoStatus.textContent = "Cargo mass too heavy for launch";
+        launchStatus.textContent = "Shuttle not ready for launch";
+        launchStatus.style.color = "red";
+    } else {
+        cargoStatus.textContent = "Cargo mass low enough for launch";
+    }
+
+    if (fuelLevel >= 10000 && cargoLevel <= 10000) {
+        launchStatus.textContent = "Shuttle is ready for launch";
+        launchStatus.style.color = "green";
+    }
+}
+
+async function myFetch() {
+    let planetsReturned;
+
+    planetsReturned = await fetch("https://handlers.education.launchcode.org/static/planets.json")
+        .then(function (response) {
+            return response.json();
+        });
+
+    return planetsReturned;
+}
+
+function pickPlanet(planets) {
+    let index = Math.floor(Math.random() * planets.length);
+    return planets[index];
+}
+
+module.exports.addDestinationInfo = addDestinationInfo;
+module.exports.validateInput = validateInput;
+module.exports.formSubmission = formSubmission;
+module.exports.pickPlanet = pickPlanet; 
+module.exports.myFetch = myFetch;
 },{"cross-fetch/polyfill":1}]},{},[2,3]);
